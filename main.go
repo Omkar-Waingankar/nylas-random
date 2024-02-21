@@ -5,14 +5,13 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
-	"sort"
 )
 
 const (
 	grantID = "e27a97fc-1622-4ba7-bb67-c90502023e60"
 	apiKey  = "REPLACE_WITH_API_KEY"
 	limit   = 50
-	maxIter = 3
+	maxIter = 4
 	folder  = "SENT"
 )
 
@@ -40,7 +39,7 @@ func main() {
 
 	// Check if threads are in descending order
 	if !isDescendingOrder(threads) {
-		fmt.Println("Error: Threads are not in descending order")
+		fmt.Println("Error: Threads are not in descending order. Exiting...")
 		return
 	}
 }
@@ -122,18 +121,19 @@ func fetchThreads() ([]Thread, error) {
 }
 
 func isDescendingOrder(threads []Thread) bool {
-	// Sort threads in descending order based on date
-	sort.SliceStable(threads, func(i, j int) bool {
-		return threads[i].LatestDraftOrMessage.Date > threads[j].LatestDraftOrMessage.Date
-	})
+	inOrder := true
 
 	// Check if threads are in descending order
 	for i := 1; i < len(threads); i++ {
 		if threads[i].LatestDraftOrMessage.Date > threads[i-1].LatestDraftOrMessage.Date {
-			return false
+			fmt.Printf("Error: Threads are not in descending order. Thread %v (index %v) is newer than thread %v (index %v)\n", threads[i].ID, i, threads[i-1].ID, i-1)
+			inOrder = false
 		}
 	}
 
-	fmt.Println("Threads are in descending order")
-	return true
+	if inOrder {
+		fmt.Println("Threads are in descending order")
+	}
+
+	return inOrder
 }

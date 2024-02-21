@@ -8,11 +8,15 @@ import (
 )
 
 const (
-	grantID = "e27a97fc-1622-4ba7-bb67-c90502023e60"
+	grantID = "nylas_test_8"
 	apiKey  = "REPLACE_WITH_API_KEY"
-	limit   = 50
-	maxIter = 4
-	folder  = "SENT"
+	limit   = 20
+	maxIter = 10
+	folder  = "DRAFT"
+
+	local    = true
+	provider = "google"
+	email    = "nylas_test_8@nylas.com"
 )
 
 type Thread struct {
@@ -49,9 +53,18 @@ func fetchThreads() ([]Thread, error) {
 	client := &http.Client{}
 
 	// Create a new request
-	u, err := url.Parse(fmt.Sprintf("https://api-staging.us.nylas.com/v3/grants/%s/threads", grantID))
-	if err != nil {
-		return nil, err
+	var u *url.URL
+	var err error
+	if local {
+		u, err = url.Parse("http://localhost:6060/v3/threads")
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		u, err = url.Parse(fmt.Sprintf("https://api-staging.us.nylas.com/v3/grants/%s/threads", grantID))
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	q := u.Query()
@@ -74,7 +87,13 @@ func fetchThreads() ([]Thread, error) {
 	}
 
 	// Set the necessary headers for authentication
-	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+	if local {
+		req.Header.Set("X-Nylas-Provider-gma", provider)
+		req.Header.Set("X-Nylas-Email-Address", email)
+		req.Header.Set("X-Nylas-Grant-ID", grantID)
+	} else {
+		req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", apiKey))
+	}
 
 	var allThreads []Thread
 	pageToken := ""
